@@ -57,10 +57,9 @@ void ipsender::populateList(sys &sys_1)
             }
         }
     }
+
     qDebug() << "Watching list populated!";
-    qDebug() << "List of status paths being monitored...";
-    qDebug() << watched.files();
-    qDebug() << "Info for corresponding paths...";
+    qDebug() << "Info on Watched Paths";
 
     for (int i = 0; i < w_info.size(); i++)
     {
@@ -68,9 +67,26 @@ void ipsender::populateList(sys &sys_1)
                  << " Host Index: " << w_info[i].hostindex
                  << " Process Index: " << w_info[i].procindex
                  << " Interface?: " << w_info[i].in_interface
-                 << " Source Host: " << w_info[i].dns_source;
+                 << " Source Host: " << w_info[i].dns_source
+                 << " Status Path: " << watched.files()[i];
     }
 
+    selfPopulate(w_info, watched.files(), sys_1);
 
 
+}
+
+void ipsender::selfPopulate(QVector<watching> watched, QStringList paths, sys &sys_1)
+{
+    qDebug() << "Populating host's own data structure";
+    for ( int i = 0; i < watched.size(); i++)
+    {
+        if (watched[i].procindex == -1)
+        {
+            if(watched[i].in_interface == false)
+            {
+                qDebug() << "Place file dumper here";
+            }
+        }
+    }
 }

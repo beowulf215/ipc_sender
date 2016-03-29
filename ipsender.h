@@ -23,6 +23,7 @@ class ipsender : public QObject
 public:
     ipsender();
     void populateList(sys &sys_1);
+    void selfPopulate(QVector<watching> watched, QStringList paths, sys &sys_1);
     QString schemaPath;
     QUdpSocket *socket;
     QHostAddress groupAddress;
