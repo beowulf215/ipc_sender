@@ -85,7 +85,51 @@ void ipsender::selfPopulate(QVector<watching> watched, QStringList paths, sys &s
         {
             if(watched[i].in_interface == false)
             {
-                qDebug() << "Place file dumper here";
+                QFile file(paths[i]);
+
+                if (!file.open(QFile::ReadOnly | QFile::Text)) break;
+                QTextStream in(&file);
+
+                sys_1.subsystems[watched[i].subindex].hosts[watched[i].hostindex].status = in.readAll();
+                qDebug() << sys_1.subsystems[watched[i].subindex].hosts[watched[i].hostindex].status_path;
+                qDebug() << sys_1.subsystems[watched[i].subindex].hosts[watched[i].hostindex].status;
+            }
+            else if (watched[i].in_interface == true)
+            {
+                QFile file(paths[i]);
+
+                if (!file.open(QFile::ReadOnly | QFile::Text)) break;
+                QTextStream in(&file);
+
+                sys_1.subsystems[watched[i].subindex].hosts[watched[i].hostindex].hostInterface.status = in.readAll();
+                qDebug() << sys_1.subsystems[watched[i].subindex].hosts[watched[i].hostindex].hostInterface.status_path;
+                qDebug() << sys_1.subsystems[watched[i].subindex].hosts[watched[i].hostindex].hostInterface.status;
+            }
+        }
+
+        if (watched[i].procindex != -1)
+        {
+            if(watched[i].in_interface == false)
+            {
+                QFile file(paths[i]);
+
+                if (!file.open(QFile::ReadOnly | QFile::Text)) break;
+                QTextStream in(&file);
+
+                sys_1.subsystems[watched[i].subindex].hosts[watched[i].hostindex].processes[watched[i].procindex].status = in.readAll();
+                qDebug() << sys_1.subsystems[watched[i].subindex].hosts[watched[i].hostindex].processes[watched[i].procindex].status_path;
+                qDebug() << sys_1.subsystems[watched[i].subindex].hosts[watched[i].hostindex].processes[watched[i].procindex].status;
+            }
+            else if (watched[i].in_interface == true)
+            {
+                QFile file(paths[i]);
+
+                if (!file.open(QFile::ReadOnly | QFile::Text)) break;
+                QTextStream in(&file);
+
+                sys_1.subsystems[watched[i].subindex].hosts[watched[i].hostindex].processes[watched[i].procindex].procInterface.status = in.readAll();
+                qDebug() << sys_1.subsystems[watched[i].subindex].hosts[watched[i].hostindex].processes[watched[i].procindex].procInterface.status_path;
+                qDebug() << sys_1.subsystems[watched[i].subindex].hosts[watched[i].hostindex].processes[watched[i].procindex].procInterface.status;
             }
         }
     }
