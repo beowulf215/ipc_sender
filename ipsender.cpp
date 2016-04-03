@@ -1,10 +1,20 @@
 #include "ipsender.h"
 
+/*
+ * For the FileSystemWatcher to work properly for the IPC Sender, the following MUST be in the main
+ *
+ *  QFileSystemWatcher *watched = new QFileSystemWatcher(&a); //"a" being the QApplication in the main.cpp
+ *  ipsender send;
+ *  send.populateList(ssv_sys, *watched);
+ *  QObject::connect(watched,SIGNAL(fileChanged(QString)),&send,SLOT(sendinfo()));
+ *
+ * Only then will the program properly detect any changes to the watched files
+ */
+
 int subindex;
 int nameindex;
 int watchindex;
 QString localhost;
-QFileSystemWatcher watched;
 QVector<watching> w_info;
 
 ipsender::ipsender()
@@ -18,8 +28,10 @@ ipsender::ipsender()
     socket = new QUdpSocket(this);
 }
 
-void ipsender::populateList(sys &sys_1)
+void ipsender::populateList(sys &sys_1, QFileSystemWatcher &watched)
 {
+
+
     for (int i = 0; i < sys_1.index.size(); i++)
     {
         if(!QString::compare(localhost,sys_1.index[i].hostdns,Qt::CaseSensitive))
@@ -35,6 +47,7 @@ void ipsender::populateList(sys &sys_1)
     {
         if(sys_1.index[i].subindex == subindex && sys_1.index[i].hostindex == nameindex)
         {
+
             watched.addPath(sys_1.index[i].statuspath);
             w_info.push_back(watching());
             w_info[watchindex].subindex = subindex;
@@ -58,6 +71,8 @@ void ipsender::populateList(sys &sys_1)
         }
     }
 
+
+
     qDebug() << "Watching list populated!";
     qDebug() << "Info on Watched Paths";
 
@@ -71,6 +86,7 @@ void ipsender::populateList(sys &sys_1)
                  << " Status Path: " << watched.files()[i];
     }
 
+    watchindex = 0;
     selfPopulate(w_info, watched.files(), sys_1);
 
 
@@ -133,4 +149,9 @@ void ipsender::selfPopulate(QVector<watching> watched, QStringList paths, sys &s
             }
         }
     }
+}
+
+void ipsender::sendinfo()
+{
+    qDebug() << "Sent";
 }

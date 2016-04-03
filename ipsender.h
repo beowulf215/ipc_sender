@@ -20,15 +20,20 @@ struct watching
 
 class ipsender : public QObject
 {
+    Q_OBJECT
+
 public:
     ipsender();
-    void populateList(sys &sys_1);
+    void populateList(sys &sys_1, QFileSystemWatcher &watched);
     void selfPopulate(QVector<watching> watched, QStringList paths, sys &sys_1);
     QString schemaPath;
     QUdpSocket *socket;
     QHostAddress groupAddress;
     int ssvTTL;
     quint16 ssvSocket;
+
+public slots:
+    void sendinfo();
 
 };
 
