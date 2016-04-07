@@ -32,6 +32,8 @@ ipsender::ipsender()
     groupAddress = QHostAddress("239.255.43.21");
     ssvSocket = 45454;
     socket = new QUdpSocket(this);
+    socket->bind(QHostAddress::AnyIPv4, ssvSocket, QUdpSocket::ShareAddress);
+    socket->joinMulticastGroup(groupAddress);
 }
 
 void ipsender::populateList(sys &sys_1, QFileSystemWatcher &watched)
@@ -163,17 +165,10 @@ void ipsender::selfPopulate(QVector<watching> watched, QStringList paths, sys &s
     }
 }
 
-//find change
-//alter own data structure
-//multicast status
-//see about defining ssv as local (with address)
 
-
-//what to need: subindex, hostindex, procindex, in_interface, status
 
 void ipsender::sendinfo(const QString &path)
 {
-
     if(already_populated)
     {
 
@@ -246,6 +241,8 @@ void ipsender::sendinfo(const QString &path)
     }
 
     qDebug() << "Datagram prepared as: " + datagram;
+    QByteArray data (datagram.toStdString().c_str());
+    socket->writeDatagram(data,groupAddress,ssvSocket);
 
     }
 
