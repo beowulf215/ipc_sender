@@ -1,4 +1,5 @@
 #include "ipsender.h"
+#include "xmlparse.h"
 
 /*
  * For the FileSystemWatcher to work properly for the IPC Sender, the following MUST be in the main
@@ -14,14 +15,19 @@
 int subindex;
 int nameindex;
 int watchindex;
+bool already_populated;
 QString localhost;
+QString datagram;
 QVector<watching> w_info;
+QStringList w_list;
+sys *ssv;
 
 ipsender::ipsender()
 {
     subindex = 0;
     nameindex = 0;
     watchindex = 0;
+    already_populated = false;
     localhost = QHostInfo::localHostName();
     groupAddress = QHostAddress("239.255.43.21");
     ssvSocket = 45454;
@@ -30,6 +36,9 @@ ipsender::ipsender()
 
 void ipsender::populateList(sys &sys_1, QFileSystemWatcher &watched)
 {
+    if(!already_populated)
+    {
+        ssv = &sys_1;
 
 
     for (int i = 0; i < sys_1.index.size(); i++)
@@ -86,9 +95,12 @@ void ipsender::populateList(sys &sys_1, QFileSystemWatcher &watched)
                  << " Status Path: " << watched.files()[i];
     }
 
+    w_list = watched.files();
+
     watchindex = 0;
     selfPopulate(w_info, watched.files(), sys_1);
-
+    already_populated = true;
+    }
 
 }
 
@@ -151,7 +163,90 @@ void ipsender::selfPopulate(QVector<watching> watched, QStringList paths, sys &s
     }
 }
 
-void ipsender::sendinfo()
+//find change
+//alter own data structure
+//multicast status
+//see about defining ssv as local (with address)
+
+
+//what to need: subindex, hostindex, procindex, in_interface, status
+
+void ipsender::sendinfo(const QString &path)
 {
-    qDebug() << "Sent";
+
+    if(already_populated)
+    {
+
+    qDebug() << "Detected Change for " + path;
+
+    for (int i = 0; i < w_info.size(); i++)
+    {
+        if(!path.compare(w_list[i]))
+        {
+            {
+                if (w_info[i].procindex == -1)
+                {
+                    if(w_info[i].in_interface == false)
+                    {
+                        QFile file(w_list[i]);
+
+                        if (!file.open(QFile::ReadOnly | QFile::Text)) break;
+                        QTextStream in(&file);
+
+                        ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].status = in.readAll();
+
+                        datagram = QString("%1;%2;%3;%4;%5").arg(w_info[i].subindex).arg(w_info[i].hostindex).arg(w_info[i].procindex)
+                                .arg(w_info[i].in_interface).arg(ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].status);
+
+                    }
+                    else if (w_info[i].in_interface == true)
+                    {
+                        QFile file(w_list[i]);
+
+                        if (!file.open(QFile::ReadOnly | QFile::Text)) break;
+                        QTextStream in(&file);
+
+                        ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].hostInterface.status = in.readAll();
+
+                        datagram = QString("%1;%2;%3;%4;%5").arg(w_info[i].subindex).arg(w_info[i].hostindex).arg(w_info[i].procindex)
+                                .arg(w_info[i].in_interface).arg(ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].hostInterface.status);
+                    }
+                }
+
+                if (w_info[i].procindex != -1)
+                {
+                    if(w_info[i].in_interface == false)
+                    {
+                        QFile file(w_list[i]);
+
+                        if (!file.open(QFile::ReadOnly | QFile::Text)) break;
+                        QTextStream in(&file);
+
+                        ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].processes[w_info[i].procindex].status = in.readAll();
+
+                        datagram = QString("%1;%2;%3;%4;%5").arg(w_info[i].subindex).arg(w_info[i].hostindex).arg(w_info[i].procindex)
+                                .arg(w_info[i].in_interface).arg(ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].processes[w_info[i].procindex].status);
+                    }
+                    else if (w_info[i].in_interface == true)
+                    {
+                        QFile file(w_list[i]);
+
+                        if (!file.open(QFile::ReadOnly | QFile::Text)) break;
+                        QTextStream in(&file);
+
+                        ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].processes[w_info[i].procindex].procInterface.status = in.readAll();
+
+                        datagram = QString("%1;%2;%3;%4;%5").arg(w_info[i].subindex).arg(w_info[i].hostindex).arg(w_info[i].procindex)
+                                .arg(w_info[i].in_interface).arg(ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].processes[w_info[i].procindex].procInterface.status);
+                    }
+                }
+            }
+
+        }
+    }
+
+    qDebug() << "Datagram prepared as: " + datagram;
+
+    }
+
 }

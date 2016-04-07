@@ -8,6 +8,7 @@
 #include <QString>
 #include <QFileSystemWatcher>
 #include <xmlparse.h>
+#include <QStringList>
 
 struct watching
 {
@@ -33,7 +34,7 @@ public:
     quint16 ssvSocket;
 
 public slots:
-    void sendinfo();
+    void sendinfo(const QString &path);
 
 };
 
