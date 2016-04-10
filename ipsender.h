@@ -35,6 +35,7 @@ public:
 
 public slots:
     void sendinfo(const QString &path);
+    void inter_send();
 
 };
 

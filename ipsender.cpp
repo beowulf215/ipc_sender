@@ -17,7 +17,8 @@ int nameindex;
 int watchindex;
 bool already_populated;
 QString localhost;
-QString datagram;
+QString datagram; //Datagram for changes in a file
+QString datagram2; //Datagram for intermittent messages to the networked hosts
 QVector<watching> w_info;
 QStringList w_list;
 sys *ssv;
@@ -34,6 +35,17 @@ ipsender::ipsender()
     socket = new QUdpSocket(this);
     socket->bind(QHostAddress::AnyIPv4, ssvSocket, QUdpSocket::ShareAddress);
     socket->joinMulticastGroup(groupAddress);
+
+
+    QThread* time_thread = new QThread(0);
+    QTimer* timer = new QTimer(this);
+
+    timer->moveToThread(time_thread);
+
+    connect(timer, SIGNAL(timeout()), this, SLOT(inter_send()));
+    timer->start(4000);
+
+
 }
 
 void ipsender::populateList(sys &sys_1, QFileSystemWatcher &watched)
@@ -178,7 +190,7 @@ void ipsender::sendinfo(const QString &path)
     {
         if(!path.compare(w_list[i]))
         {
-            {
+            //{
                 if (w_info[i].procindex == -1)
                 {
                     if(w_info[i].in_interface == false)
@@ -235,7 +247,7 @@ void ipsender::sendinfo(const QString &path)
                                 .arg(w_info[i].in_interface).arg(ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].processes[w_info[i].procindex].procInterface.status);
                     }
                 }
-            }
+            //}
 
         }
     }
@@ -246,4 +258,49 @@ void ipsender::sendinfo(const QString &path)
 
     }
 
+}
+
+
+void ipsender::inter_send()
+{
+    if (already_populated)
+    {
+        qDebug() << "Sending Intermittent Datagram";
+        for (int i = 0; i < w_info.size(); i++)
+        {
+
+            if (w_info[i].procindex == -1)
+            {
+                if(w_info[i].in_interface == false)
+                {
+                    datagram2 = QString("%1;%2;%3;%4;%5").arg(w_info[i].subindex).arg(w_info[i].hostindex).arg(w_info[i].procindex)
+                            .arg(w_info[i].in_interface).arg(ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].status);
+
+                }
+                else if (w_info[i].in_interface == true)
+                {
+                    datagram2 = QString("%1;%2;%3;%4;%5").arg(w_info[i].subindex).arg(w_info[i].hostindex).arg(w_info[i].procindex)
+                            .arg(w_info[i].in_interface).arg(ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].hostInterface.status);
+                }
+            }
+
+            if (w_info[i].procindex != -1)
+            {
+                if(w_info[i].in_interface == false)
+                {
+                    datagram2 = QString("%1;%2;%3;%4;%5").arg(w_info[i].subindex).arg(w_info[i].hostindex).arg(w_info[i].procindex)
+                            .arg(w_info[i].in_interface).arg(ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].processes[w_info[i].procindex].status);
+                }
+                else if (w_info[i].in_interface == true)
+                {
+                    datagram2 = QString("%1;%2;%3;%4;%5").arg(w_info[i].subindex).arg(w_info[i].hostindex).arg(w_info[i].procindex)
+                            .arg(w_info[i].in_interface).arg(ssv->subsystems[w_info[i].subindex].hosts[w_info[i].hostindex].processes[w_info[i].procindex].procInterface.status);
+                }
+            }
+
+            qDebug() << "Intermittent Datagrams prepared as\n" << datagram2;
+            QByteArray data2 (datagram2.toStdString().c_str());
+            socket->writeDatagram(data2,groupAddress,ssvSocket);
+        }
+    }
 }
