@@ -36,11 +36,7 @@ ipsender::ipsender()
     socket->bind(QHostAddress::AnyIPv4, ssvSocket, QUdpSocket::ShareAddress);
     socket->joinMulticastGroup(groupAddress);
 
-
-    QThread* time_thread = new QThread(0);
     QTimer* timer = new QTimer(this);
-
-    timer->moveToThread(time_thread);
 
     connect(timer, SIGNAL(timeout()), this, SLOT(inter_send()));
     timer->start(4000);
